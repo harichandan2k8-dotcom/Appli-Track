@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <script>
+        (function () {
+            var base = '/';
+            if (location.hostname.endsWith('github.io')) {
+                var repo = location.pathname.split('/').filter(Boolean)[0];
+                if (repo) base = '/' + repo + '/';
+            }
+            var tag = document.createElement('base');
+            tag.href = base;
+            document.head.appendChild(tag);
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppliTrack - Home Appliance Care</title>
+    <meta name="description" content="Track home appliance health, log service history, get repair-vs-replace analytical reports, and generate device QR codes.">
+    <!-- FontAwesome CDNs -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand-container">
+                <div class="brand-logo">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <span class="brand-name">AppliTrack</span>
+            </div>
+            
+            <ul class="nav-links">
+                <li class="nav-item active" data-view="home">
+                    <a href="#home"><i class="fas fa-house"></i> Home</a>
+                </li>
+                <li class="nav-item" data-view="appliances">
+                    <a href="#appliances"><i class="fas fa-plug"></i> Appliances</a>
+                </li>
+                <li class="nav-item" data-view="reminders">
+                    <a href="#reminders"><i class="fas fa-bell"></i> Reminders</a>
+                </li>
+                <li class="nav-item" data-view="analytics">
+                    <a href="#analytics"><i class="fas fa-chart-line"></i> Analytics</a>
+                </li>
+                <li class="nav-item" data-view="profile">
+                    <a href="#profile"><i class="fas fa-user-circle"></i> Profile</a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-title-container">
+                    <h1 id="header-view-title">Home</h1>
+                </div>
+                <div class="header-controls">
+                    <span id="global-role-indicator" class="badge status-success" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-weight: 700; font-size: 12px;">
+                        <i class="fas fa-user-shield"></i> <span id="global-role-name">Owner</span>
+                    </span>
+                    <div id="header-user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; overflow: hidden; border: 1px solid var(--card-border);">
+                        <i class="fas fa-user" style="color: white;"></i>
+                    </div>
+                    <button class="theme-toggle-btn" id="theme-toggle" title="Toggle Dark/Light Mode">
+                        <i class="fas fa-sun"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dynamic View Mount Container -->
+            <main class="content-container" id="content-mount">
+                <!-- Javascript will render views here -->
+            </main>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT APPLIANCE MODAL -->
+    <div class="modal-overlay" id="appliance-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title" id="appliance-modal-title">Register Appliance</h3>
+                <button class="modal-close" id="appliance-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="appliance-form">
+                    <input type="hidden" id="app-id">
+                    
+                    <div class="form-group">
+                        <label for="app-name">APPLIANCE NAME</label>
+                        <input type="text" id="app-name" placeholder="E.g., Kitchen Refrigerator, Garage Freezer" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="app-brand">BRAND</label>
+                            <input type="text" id="app-brand" placeholder="E.g., LG, Samsung, Bosch" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="app-model">MODEL NUMBER</label>
+                            <input type="text" id="app-model" placeholder="E.g., LMXS28626S" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="app-serial">SERIAL NUMBER (OPTIONAL)</label>
+                        <input type="text" id="app-serial" placeholder="E.g., SN-982172-XYZ">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="app-purchase-date">PURCHASE DATE</label>
+                            <input type="date" id="app-purchase-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="app-purchase-price">PURCHASE PRICE (₹)</label>
+                            <input type="number" id="app-purchase-price" min="0" step="any" placeholder="E.g., 1200" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="app-warranty">WARRANTY (MONTHS)</label>
+                            <input type="number" id="app-warranty" min="0" placeholder="E.g., 12" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="app-lifespan">EXPECTED LIFESPAN (YEARS)</label>
+                            <input type="number" id="app-lifespan" min="1" max="50" placeholder="E.g., 10" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="app-room">ROOM / LOCATION</label>
+                            <select id="app-room" required>
+                                <option value="Kitchen">Kitchen</option>
+                                <option value="Laundry Room">Laundry Room</option>
+                                <option value="Living Room">Living Room</option>
+                                <option value="Garage">Garage</option>
+                                <option value="Bathroom">Bathroom</option>
+                                <option value="Utility Room">Utility Room</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="app-status">INITIAL HEALTH STATUS</label>
+                            <select id="app-status" required>
+                                <option value="Operational">Operational</option>
+                                <option value="Needs Service">Needs Service</option>
+                                <option value="Replace Suggested">Replace Suggested</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="app-image-file">APPLIANCE PHOTO</label>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <input type="file" id="app-image-file" accept="image/*" style="display: none;">
+                            <button type="button" class="btn-secondary" id="app-image-upload-btn" style="padding: 8px 16px;"><i class="fas fa-camera"></i> Upload Photo</button>
+                            <span id="app-image-filename" style="font-size: 12px; color: var(--text-secondary);">No photo uploaded</span>
+                        </div>
+                        <input type="hidden" id="app-image-base64">
+                        <!-- Image Preview -->
+                        <div id="app-image-preview-container" style="margin-top: 12px; display: none;">
+                            <img id="app-image-preview" style="max-width: 100%; height: 100px; object-fit: cover; border-radius: var(--border-radius-sm); border: 1px solid var(--card-border);">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="app-notes">NOTES & SERVICE NUMBER MEMOS</label>
+                        <textarea id="app-notes" rows="3" placeholder="Provide extra support details or model parts number..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="appliance-form-cancel">Cancel</button>
+                        <button type="submit" class="btn-primary" id="appliance-form-submit">Save Appliance</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- RECORD SERVICE LOG MODAL -->
+    <div class="modal-overlay" id="service-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title" id="service-modal-title">Record Maintenance Service</h3>
+                <button class="modal-close" id="service-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="service-form">
+                    <input type="hidden" id="srv-id">
+                    
+                    <div class="form-group">
+                        <label for="srv-appliance-id">TARGET APPLIANCE</label>
+                        <select id="srv-appliance-id" required>
+                            <!-- Filled in dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="srv-date">SERVICE DATE</label>
+                            <input type="date" id="srv-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="srv-type">SERVICE TYPE</label>
+                            <select id="srv-type" required>
+                                <option value="Maintenance">Routine Maintenance</option>
+                                <option value="Repair">System Repair</option>
+                                <option value="Installation">Installation / Upgrade</option>
+                                <option value="Cleaning">Deep Cleaning</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="srv-cost">SERVICE OPERATION COST (₹)</label>
+                        <input type="number" id="srv-cost" min="0" step="any" placeholder="E.g., 150" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="srv-tech">TECHNICIAN NAME / COMPANY</label>
+                            <input type="text" id="srv-tech" placeholder="E.g., Carrier Service Centre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="srv-phone">SUPPORT TELEPHONE (OPTIONAL)</label>
+                            <input type="text" id="srv-phone" placeholder="E.g., +1 (555) 123-4567">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="srv-desc">OPERATION DESCRIPTION</label>
+                        <textarea id="srv-desc" rows="3" placeholder="Explain diagnostics, components replaced, or calibrations performed..." required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="service-form-cancel">Cancel</button>
+                        <button type="submit" class="btn-primary" id="service-form-submit">Save Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE QR SCANNER MODAL -->
+    <div class="modal-overlay" id="scanner-modal">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-qrcode"></i> Live QR Code Scanner</h3>
+                <button class="modal-close" id="scanner-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div style="display: flex; gap: 8px; margin-bottom: 16px; background: rgba(255,255,255,0.03); padding: 4px; border-radius: var(--border-radius-md);">
+                    <button class="filter-tab active" id="scanner-tab-camera" style="flex: 1; padding: 6px 12px;">Live Camera</button>
+                    <button class="filter-tab" id="scanner-tab-simulate" style="flex: 1; padding: 6px 12px;">Simulate Scan</button>
+                </div>
+                
+                <!-- Camera View -->
+                <div id="scanner-camera-container">
+                    <div id="scanner-reader" style="width: 100%; border-radius: var(--border-radius-md); overflow: hidden; background: #000; position: relative; border: 1px solid var(--card-border);">
+                        <!-- Live video will mount here -->
+                        <div id="scanner-laser" style="position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--danger); box-shadow: 0 0 8px var(--danger); animation: scanAnimation 2s linear infinite; z-index: 10; pointer-events: none;"></div>
+                    </div>
+                    <div id="scanner-camera-error" style="color: var(--danger); font-size: 13px; text-align: center; margin-top: 12px; display: none;">
+                        Camera access could not be established. Ensure camera permissions are enabled, or switch to the Simulated Scan tab.
+                    </div>
+                </div>
+                
+                <!-- Simulator View -->
+                <div id="scanner-simulate-container" style="display: none; text-align: center; padding: 12px 0;">
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Select an appliance to simulate scanning its physical QR code tag:</p>
+                    <div class="form-group">
+                        <select id="scanner-simulate-select" class="user-dropdown" style="width: 100%;">
+                            <!-- Filled in dynamically -->
+                        </select>
+                    </div>
+                    <button type="button" class="btn-primary" id="scanner-simulate-submit" style="width: 100%; justify-content: center; margin-top: 12px;">
+                        <i class="fas fa-qrcode"></i> Simulate Scan Event
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INVITE HOUSEHOLD MEMBER MODAL -->
+    <div class="modal-overlay" id="invite-modal">
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="invite-modal-title"><i class="fas fa-user-plus"></i> Invite Household Member</h3>
+                <button class="modal-close" id="invite-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <form id="invite-form">
+                    <div class="form-group">
+                        <label for="invite-name">FULL NAME</label>
+                        <input type="text" id="invite-name" placeholder="E.g., Sam Morgan" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="invite-email">EMAIL ADDRESS</label>
+                        <input type="email" id="invite-email" placeholder="E.g., sam@family.home" required>
+                    </div>
+                    <div class="form-actions" style="margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end;">
+                        <button type="button" class="btn-secondary" id="invite-form-cancel">Cancel</button>
+                        <button type="submit" class="btn-primary" id="invite-form-submit">Send Invitation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIMULATED MOBILE SCAN PREVIEW MODAL -->
+    <div class="modal-overlay" id="scan-modal">
+        <div class="modal-container" style="max-width: 500px; padding: 0;">
+            <div class="modal-header" style="border: none; position: absolute; right: 8px; top: 8px; z-index: 1100;">
+                <button class="modal-close" id="scan-modal-close" style="font-size: 28px; background: rgba(0,0,0,0.4); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: white;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <!-- Simulated Phone frame mockup to feel premium -->
+                <div style="background: #030712; padding: 20px 10px; border-radius: var(--border-radius-lg); border: 8px solid #1f2937; box-shadow: inset 0 0 10px #000; overflow: hidden; min-height: 500px;" id="phone-frame-mount">
+                    <!-- Scanner render goes here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Chart.js and QR Code libs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Application Scripts -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
