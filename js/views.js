@@ -977,8 +977,8 @@ export const Views = {
                             ` : ''}
                         </div>
 
-                        <!-- Supabase Cloud Sync Panel -->
-                        <div class="sharing-members-card">
+                        <!-- Supabase configuration is fixed in js/config.js; this legacy form is intentionally hidden. -->
+                        <div class="sharing-members-card" style="display:none;">
                             <h3 class="detail-section-title" style="margin-bottom:12px;"><i class="fas fa-database"></i> Cloud Sync</h3>
                             <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
                                 Connect your Supabase project to enable real-time household sync across devices.

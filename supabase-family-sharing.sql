@@ -29,3 +29,25 @@ grant execute on function public.get_household_members(),public.get_household_in
 
 -- New accounts join an existing email invitation, otherwise receive their own household.
 create or replace function public.handle_new_user() returns trigger language plpgsql security definer set search_path=public as $$ declare hid uuid; begin insert into public.profiles(id,email,full_name) values(new.id,new.email,coalesce(new.raw_user_meta_data->>'full_name','')); select household_id into hid from public.household_invites where lower(email)=lower(new.email) order by created_at limit 1; if hid is null then hid:=new.id; insert into public.households(id) values(hid) on conflict do nothing; insert into public.household_members(household_id,user_id,role) values(hid,new.id,'Owner') on conflict do nothing; else insert into public.household_members(household_id,user_id,role) values(hid,new.id,'Viewer') on conflict do nothing; end if; return new; end; $$;
+
+-- Owner-only household management. These SECURITY DEFINER functions keep direct table deletes blocked by RLS.
+create or replace function public.remove_household_member(member_id uuid) returns void language plpgsql security definer set search_path=public as $$
+declare hid uuid;
+begin
+  select household_id into hid from public.household_members where user_id=auth.uid() and role='Owner' limit 1;
+  if hid is null then raise exception 'Only the household owner can remove family members'; end if;
+  if member_id=auth.uid() then raise exception 'The household owner cannot remove themselves'; end if;
+  delete from public.household_members where household_id=hid and user_id=member_id;
+end;
+$$;
+
+create or replace function public.cancel_household_invite(invitee_email text) returns void language plpgsql security definer set search_path=public as $$
+declare hid uuid;
+begin
+  select household_id into hid from public.household_members where user_id=auth.uid() and role='Owner' limit 1;
+  if hid is null then raise exception 'Only the household owner can cancel invitations'; end if;
+  delete from public.household_invites where household_id=hid and email=lower(invitee_email);
+end;
+$$;
+
+grant execute on function public.remove_household_member(uuid),public.cancel_household_invite(text) to authenticated;

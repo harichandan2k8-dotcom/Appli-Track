@@ -2,6 +2,7 @@
 import { APP_CONFIG } from './config.js';
 const cache = { appliances: [], services: [], family: [], pendingInvites: [], currentUser: null };
 let client = null;
+let householdId = null;
 const api = () => {
   if (client) return client;
   if (!window.supabase || !APP_CONFIG.supabaseUrl || !APP_CONFIG.supabaseAnonKey) return null;
@@ -9,7 +10,7 @@ const api = () => {
   return client;
 };
 const dbToApp = x => ({ id:x.id,name:x.name,brand:x.brand,model:x.model,serialNumber:x.serial_number||'',purchaseDate:x.purchase_date,purchasePrice:Number(x.purchase_price),warrantyMonths:Number(x.warranty_months),lifespanYears:Number(x.lifespan_years),room:x.room,status:x.status,imageUrl:x.image_url||'',notes:x.notes||'' });
-const appToDB = x => ({ id:x.id,name:x.name,brand:x.brand,model:x.model,serial_number:x.serialNumber||null,purchase_date:x.purchaseDate,purchase_price:x.purchasePrice,warranty_months:x.warrantyMonths,lifespan_years:x.lifespanYears,room:x.room,status:x.status,image_url:x.imageUrl||null,notes:x.notes||null });
+const appToDB = x => ({ id:x.id,household_id:householdId,name:x.name,brand:x.brand,model:x.model,serial_number:x.serialNumber||null,purchase_date:x.purchaseDate,purchase_price:x.purchasePrice,warranty_months:x.warrantyMonths,lifespan_years:x.lifespanYears,room:x.room,status:x.status,image_url:x.imageUrl||null,notes:x.notes||null });
 const dbToService = x => ({ id:x.id,applianceId:x.appliance_id,date:x.date,type:x.type,cost:Number(x.cost),technician:x.technician||'',phone:x.phone||'',description:x.description });
 const serviceToDB = x => ({ id:x.id,appliance_id:x.applianceId,date:x.date,type:x.type,cost:x.cost,technician:x.technician||null,phone:x.phone||null,description:x.description });
 const dbToProfile = x => ({ id:x.id,name:x.full_name||x.email,email:x.email,role:'Owner',profilePic:x.profile_pic||'' });
@@ -24,8 +25,9 @@ export const db = {
     if(!api()) return;
     const {data:{user}}=await api().auth.getUser();
     if(!user){cache.currentUser=null;return;}
-    const [p,a,s]=await Promise.all([api().from('profiles').select('*').eq('id',user.id).single(),api().from('appliances').select('*').order('created_at',{ascending:false}),api().from('services').select('*').order('date',{ascending:false})]);
-    if(p.error||a.error||s.error) throw p.error||a.error||s.error;
+    const [p,m,a,s]=await Promise.all([api().from('profiles').select('*').eq('id',user.id).single(),api().from('household_members').select('household_id').eq('user_id',user.id).single(),api().from('appliances').select('*').order('created_at',{ascending:false}),api().from('services').select('*').order('date',{ascending:false})]);
+    if(p.error||m.error||a.error||s.error) throw p.error||m.error||a.error||s.error;
+    householdId=m.data.household_id;
     cache.currentUser=dbToProfile(p.data);
     cache.appliances=a.data.map(dbToApp);
     cache.services=s.data.map(dbToService);
@@ -40,7 +42,7 @@ export const db = {
     } catch(e){ cache.family=[cache.currentUser]; cache.pendingInvites=[]; }
   },
   getAppliances:()=>cache.appliances,getApplianceById:id=>cache.appliances.find(x=>x.id===id),
-  async saveAppliance(x){const i=cache.appliances.findIndex(a=>a.id===x.id);if(i<0)cache.appliances.unshift(x);else cache.appliances[i]=x;const {error}=await api().from('appliances').upsert(appToDB(x));if(error)throw error;return x;},
+  async saveAppliance(x){if(!householdId)throw new Error('Your household is not ready yet. Refresh the page and try again.');const {error}=await api().from('appliances').upsert(appToDB(x));if(error)throw error;const i=cache.appliances.findIndex(a=>a.id===x.id);if(i<0)cache.appliances.unshift(x);else cache.appliances[i]=x;return x;},
   async deleteAppliance(id){const {error}=await api().from('appliances').delete().eq('id',id);if(error)throw error;cache.appliances=cache.appliances.filter(x=>x.id!==id);cache.services=cache.services.filter(x=>x.applianceId!==id);},
   getServices:()=>cache.services,getServicesForAppliance:id=>cache.services.filter(x=>x.applianceId===id),
   async saveService(x){const i=cache.services.findIndex(s=>s.id===x.id);if(i<0)cache.services.unshift(x);else cache.services[i]=x;const {error}=await api().from('services').upsert(serviceToDB(x));if(error)throw error;return x;},
@@ -60,17 +62,15 @@ export const db = {
   },
   async removeFamilyMember(id){
     if(api()){
-      const {error}=await api().from('household_members').delete().eq('user_id',id);
+      const {error}=await api().rpc('remove_household_member',{member_id:id});
       if(error) throw error;
     }
     cache.family=cache.family.filter(x=>x.id!==id);
   },
   async cancelInvite(email){
     if(api()){
-      const cu=cache.currentUser;
-      // Find household ID via household_members table
-      const {data:hm}=await api().from('household_members').select('household_id').eq('user_id',cu.id).single();
-      if(hm){ await api().from('household_invites').delete().eq('household_id',hm.household_id).eq('email',email.toLowerCase()); }
+      const {error}=await api().rpc('cancel_household_invite',{invitee_email:email});
+      if(error) throw error;
     }
     cache.pendingInvites=cache.pendingInvites.filter(x=>x.email.toLowerCase()!==email.toLowerCase());
   },

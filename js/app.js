@@ -51,10 +51,10 @@ async function init() {
         return;
     }
     updateGlobalRoleHeader();
-    
+
     // Check hash for initial route, default to home
     const initialView = window.location.hash.replace('#', '') || 'home';
-    
+
     // Support direct route queries like #appliance-detail?id=app-1
     if (initialView.startsWith('appliance-detail?id=')) {
         const id = initialView.split('?id=')[1];
@@ -106,7 +106,7 @@ function initTheme() {
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('applitrack_theme', newTheme);
         updateThemeIcon(newTheme);
-        
+
         // Re-render charts to apply theme styling if on analytics
         if (state.currentView === 'analytics') {
             renderAnalyticsCharts();
@@ -136,7 +136,7 @@ function initImageUpload() {
 
     if (uploadBtn && fileInput) {
         uploadBtn.addEventListener('click', () => fileInput.click());
-        
+
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -145,9 +145,9 @@ function initImageUpload() {
                     alert('Please select a valid image file.');
                     return;
                 }
-                
+
                 filenameSpan.textContent = file.name;
-                
+
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const base64Str = event.target.result;
@@ -179,7 +179,7 @@ function updateGlobalRoleHeader() {
     if (roleNameEl && roleIndicatorEl) {
         roleNameEl.textContent = currentUser.role;
         roleIndicatorEl.className = 'badge';
-        
+
         // Dynamic badge style matching current simulated user role
         if (currentUser.role === 'Owner') {
             roleIndicatorEl.classList.add('status-success');
@@ -194,7 +194,7 @@ function updateGlobalRoleHeader() {
     }
 
     if (avatarEl) {
-        avatarEl.innerHTML = currentUser.profilePic 
+        avatarEl.innerHTML = currentUser.profilePic
             ? `<img src="${currentUser.profilePic}" style="width: 100%; height: 100%; object-fit: cover;">`
             : `<i class="fas fa-user" style="color: white;"></i>`;
     }
@@ -215,10 +215,10 @@ function setupGlobalEventListeners() {
     // Close modals on clicking X or cancel
     document.getElementById('appliance-modal-close').addEventListener('click', () => closeModal(applianceModal));
     document.getElementById('appliance-form-cancel').addEventListener('click', () => closeModal(applianceModal));
-    
+
     document.getElementById('service-modal-close').addEventListener('click', () => closeModal(serviceModal));
     document.getElementById('service-form-cancel').addEventListener('click', () => closeModal(serviceModal));
-    
+
     document.getElementById('scan-modal-close').addEventListener('click', () => closeModal(scanModal));
 
     // Invite modal close
@@ -238,6 +238,7 @@ function setupGlobalEventListeners() {
             closeModal(inviteModal);
             e.target.reset();
             renderActiveView();
+            alert('Invitation added. It will appear as Pending until that person signs up with this exact email address.');
         } catch (err) {
             alert('Could not send invite: ' + err.message);
         } finally {
@@ -250,7 +251,7 @@ function setupGlobalEventListeners() {
     document.getElementById('scanner-modal-close').addEventListener('click', () => closeScannerModal());
     document.getElementById('scanner-tab-camera').addEventListener('click', () => switchScannerTab('camera'));
     document.getElementById('scanner-tab-simulate').addEventListener('click', () => switchScannerTab('simulate'));
-    
+
     document.getElementById('scanner-simulate-submit').addEventListener('click', () => {
         const selectedId = document.getElementById('scanner-simulate-select').value;
         if (selectedId) {
@@ -270,7 +271,7 @@ function setupGlobalEventListeners() {
 function navigateTo(view, id = null) {
     state.currentView = view;
     state.selectedApplianceId = id;
-    
+
     // Set URL Hash without triggering separate render loop
     if (view === 'appliance-detail') {
         window.location.hash = `#appliance-detail?id=${id}`;
@@ -311,12 +312,12 @@ function renderActiveView() {
             contentMount.innerHTML = Views.renderHome(state);
             setupHomeEvents();
             break;
-            
+
         case 'appliances':
             contentMount.innerHTML = Views.renderAppliances(state);
             setupAppliancesEvents();
             break;
-            
+
         case 'appliance-detail':
             const app = db.getApplianceById(state.selectedApplianceId);
             if (app) {
@@ -327,28 +328,28 @@ function renderActiveView() {
                 navigateTo('appliances');
             }
             break;
-            
+
         case 'reminders':
             contentMount.innerHTML = Views.renderReminders(state);
             setupRemindersEvents();
             break;
-            
+
         case 'analytics':
             contentMount.innerHTML = Views.renderAnalytics(state);
             renderAnalyticsCharts();
             setupAnalyticsViewEvents();
             break;
-            
+
         case 'profile':
             contentMount.innerHTML = Views.renderProfile(state);
             setupProfileEvents();
             break;
-            
+
         case 'qr-portal':
             contentMount.innerHTML = Views.renderQRPortal(state.selectedApplianceId, state);
             setupQRPortalEvents();
             break;
-            
+
         default:
             contentMount.innerHTML = `<p>Page Not Found</p>`;
     }
@@ -360,7 +361,7 @@ function renderActiveView() {
 function renderAnalyticsCharts() {
     const categoryCtx = document.getElementById('categoryChart');
     const timelineCtx = document.getElementById('timelineChart');
-    
+
     if (!categoryCtx || !timelineCtx) return;
 
     const appliances = db.getAppliances();
@@ -375,7 +376,7 @@ function renderAnalyticsCharts() {
     // 1. Category/Room Spent Chart
     const roomLabels = Object.keys(stats.spendByRoom);
     const roomData = Object.values(stats.spendByRoom);
-    
+
     if (roomLabels.length === 0) {
         roomLabels.push('No Maintenance Recorded');
         roomData.push(1);
@@ -455,7 +456,7 @@ function renderApplianceQRCode(appliance) {
     if (!target) return;
 
     target.innerHTML = '';
-    
+
     // Create local simulated scanner link
     const qrLink = `${window.location.origin}${window.location.pathname}#qr-portal?id=${appliance.id}`;
 
@@ -502,7 +503,7 @@ function setupHomeEvents() {
  */
 function openScannerModal() {
     openModal(scannerModal);
-    
+
     // Fill the simulated select dropdown with current database registry
     const simulateSelect = document.getElementById('scanner-simulate-select');
     const appliances = db.getAppliances();
@@ -698,7 +699,7 @@ function setupDetailEvents() {
         scanSimulateBtn.addEventListener('click', () => {
             phoneFrameMount.innerHTML = Views.renderQRPortal(state.selectedApplianceId, state);
             openModal(scanModal);
-            
+
             document.getElementById('portal-exit-btn').addEventListener('click', () => {
                 closeModal(scanModal);
             });
@@ -712,7 +713,7 @@ function setupDetailEvents() {
             const printWindow = window.open('', '_blank');
             const qrCanvas = document.querySelector('#appliance-qr-target canvas');
             const app = db.getApplianceById(state.selectedApplianceId);
-            
+
             if (qrCanvas && app) {
                 const qrImageURL = qrCanvas.toDataURL("image/png");
                 printWindow.document.write(`
@@ -809,7 +810,7 @@ function setupProfileEvents() {
             window.location.hash = '';
             window.location.reload();
         });
-        return;
+
     }
     // 1. Role switcher dropdown inside Profile card
     const profileSelect = document.getElementById('profile-user-select');
@@ -910,12 +911,12 @@ function setupProfileEvents() {
                 reader.onload = (event) => {
                     const base64Str = event.target.result;
                     const currentUser = db.getCurrentUser();
-                    
+
                     // Save to DB profiles and update sharing logs
                     currentUser.profilePic = base64Str;
                     db.setCurrentUser(currentUser);
                     db.saveFamilyMember(currentUser);
-                    
+
                     // Refresh view components
                     updateGlobalRoleHeader();
                     renderActiveView();
@@ -932,16 +933,16 @@ function setupProfileEvents() {
             e.preventDefault();
             const url = document.getElementById('sb-url').value.trim();
             const key = document.getElementById('sb-key').value.trim();
-            
+
             dbConfig.setCredentials(url, key);
-            
+
             try {
                 await db.sync();
                 alert('Database credentials updated! Connection established successfully.');
             } catch (err) {
                 alert('Sync connection error: ' + err.message);
             }
-            
+
             updateGlobalRoleHeader();
             renderActiveView();
         });
@@ -982,11 +983,11 @@ function openApplianceModal(appliance = null) {
 
     const title = document.getElementById('appliance-modal-title');
     const formBtn = document.getElementById('appliance-form-submit');
-    
+
     // Clear forms
     applianceForm.reset();
     document.getElementById('app-id').value = '';
-    
+
     // Reset image inputs & preview
     document.getElementById('app-image-filename').textContent = 'No photo uploaded';
     document.getElementById('app-image-base64').value = '';
@@ -996,7 +997,7 @@ function openApplianceModal(appliance = null) {
     if (appliance) {
         title.textContent = 'Modify Appliance Specs';
         formBtn.textContent = 'Save Changes';
-        
+
         // Fill form fields
         document.getElementById('app-id').value = appliance.id;
         document.getElementById('app-name').value = appliance.name;
@@ -1010,7 +1011,7 @@ function openApplianceModal(appliance = null) {
         document.getElementById('app-room').value = appliance.room;
         document.getElementById('app-status').value = appliance.status;
         document.getElementById('app-notes').value = appliance.notes || '';
-        
+
         // Load photo preview if existing imageUrl is present
         if (appliance.imageUrl) {
             document.getElementById('app-image-base64').value = appliance.imageUrl;
@@ -1043,7 +1044,7 @@ function openServiceModal(applianceId = null) {
     // Populate appliance select dropdown
     const appliances = db.getAppliances();
     const appSelect = document.getElementById('srv-appliance-id');
-    
+
     appSelect.innerHTML = appliances.map(app => `
         <option value="${app.id}" ${applianceId === app.id ? 'selected' : ''}>
             ${app.name} (${app.brand})
@@ -1058,9 +1059,9 @@ function openServiceModal(applianceId = null) {
  */
 async function handleApplianceFormSubmit(e) {
     e.preventDefault();
-    
+
     const id = document.getElementById('app-id').value || 'app-' + Math.random().toString(36).substr(2, 9);
-    
+
     const appliance = {
         id: id,
         name: document.getElementById('app-name').value,
@@ -1079,7 +1080,7 @@ async function handleApplianceFormSubmit(e) {
 
     try { await db.saveAppliance(appliance); } catch (error) { alert(`Could not save appliance: ${error.message}`); return; }
     closeModal(applianceModal);
-    
+
     // Refresh current view (e.g. details page or appliances list)
     if (state.currentView === 'appliance-detail') {
         renderActiveView();
@@ -1093,10 +1094,10 @@ async function handleApplianceFormSubmit(e) {
  */
 async function handleServiceFormSubmit(e) {
     e.preventDefault();
-    
+
     const id = 'srv-' + Math.random().toString(36).substr(2, 9);
     const targetApplianceId = document.getElementById('srv-appliance-id').value;
-    
+
     const service = {
         id: id,
         applianceId: targetApplianceId,
@@ -1109,7 +1110,7 @@ async function handleServiceFormSubmit(e) {
     };
 
     try { await db.saveService(service); } catch (error) { alert(`Could not save service record: ${error.message}`); return; }
-    
+
     // Check if service suggests repair update on the appliance itself
     if (service.type === 'Repair' || service.type === 'Maintenance') {
         const app = db.getApplianceById(targetApplianceId);
@@ -1120,7 +1121,7 @@ async function handleServiceFormSubmit(e) {
     }
 
     closeModal(serviceModal);
-    
+
     // Refresh view
     if (state.currentView === 'appliance-detail') {
         renderActiveView();
@@ -1133,7 +1134,7 @@ async function handleServiceFormSubmit(e) {
 window.addEventListener('hashchange', () => {
     const hash = window.location.hash.replace('#', '');
     if (!hash) return;
-    
+
     if (hash.startsWith('appliance-detail?id=')) {
         const id = hash.split('?id=')[1];
         if (id && id !== state.selectedApplianceId) {
