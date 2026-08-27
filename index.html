@@ -3,11 +3,8 @@
 <head>
     <script>
         (function () {
-            var base = '/';
-            if (location.hostname.endsWith('github.io')) {
-                var repo = location.pathname.split('/').filter(Boolean)[0];
-                if (repo) base = '/' + repo + '/';
-            }
+            var pathParts = location.pathname.split('/').filter(Boolean);
+            var base = pathParts[0] === 'Appli-Track' ? '/Appli-Track/' : '/';
             var tag = document.createElement('base');
             tag.href = base;
             document.head.appendChild(tag);
