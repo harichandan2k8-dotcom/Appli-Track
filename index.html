@@ -23,6 +23,14 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <div id="welcome-splash" class="welcome-splash" role="status" aria-label="Loading AppliTrack">
+        <div class="welcome-content">
+            <div class="welcome-mark"><i class="fas fa-shield-heart"></i></div>
+            <h1>AppliTrack</h1>
+            <p>Your calm command centre for every appliance at home.</p>
+            <div class="drop-loader" aria-hidden="true"><span></span><span></span><span></span></div>
+        </div>
+    </div>
 
     <div id="app-layout">
         <!-- Sidebar Navigation -->
@@ -95,17 +103,32 @@
                         <label for="app-name">APPLIANCE NAME</label>
                         <input type="text" id="app-name" placeholder="E.g., Kitchen Refrigerator, Garage Freezer" required>
                     </div>
+
+                    <div class="smart-import-card">
+                        <div><strong><i class="fas fa-wand-magic-sparkles"></i> Smart document scan</strong><p>Scan a clear JPG, PNG, WebP, or PDF. Text is read from scanned PDFs too, and your existing form entries are kept.</p></div>
+                        <input type="file" id="app-document-file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" capture="environment" hidden>
+                        <button type="button" class="btn-secondary" id="app-document-upload-btn"><i class="fas fa-file-arrow-up"></i> Choose photo or PDF</button>
+                        <div id="app-document-status" class="smart-import-status" aria-live="polite"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="app-type">APPLIANCE TYPE</label>
+                        <select id="app-type"><option value="">Select appliance type</option></select>
+                    </div>
                     
                     <div class="form-row">
                         <div class="form-group">
                             <label for="app-brand">BRAND</label>
-                            <input type="text" id="app-brand" placeholder="E.g., LG, Samsung, Bosch" required>
+                            <input type="text" id="app-brand" list="brand-options" placeholder="Select or type a brand" required>
+                            <datalist id="brand-options"></datalist>
                         </div>
                         <div class="form-group">
                             <label for="app-model">MODEL NUMBER</label>
                             <input type="text" id="app-model" placeholder="E.g., LMXS28626S" required>
                         </div>
                     </div>
+
+                    <a id="app-support-link" class="support-link" href="#" target="_blank" rel="noopener" hidden><i class="fas fa-headset"></i> Open brand support website <i class="fas fa-arrow-up-right-from-square"></i></a>
 
                     <div class="form-group">
                         <label for="app-serial">SERIAL NUMBER (OPTIONAL)</label>
@@ -334,6 +357,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Application Scripts -->

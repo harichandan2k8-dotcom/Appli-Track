@@ -3,6 +3,7 @@
  */
 import { AnalyticsEngine } from './recommendation.js';
 import { db, dbConfig } from './db.js';
+import { supportUrlFor } from './smart-import.js';
 
 export const Views = {
     /**
@@ -287,6 +288,7 @@ export const Views = {
                     <div style="display: flex; gap: 12px;">
                         <button class="btn-danger" id="detail-delete-btn" data-id="${appliance.id}" ${!db.isAdmin() ? 'disabled' : ''}><i class="fas fa-trash"></i> Delete Device</button>
                         <button class="btn-secondary" id="detail-edit-btn" data-id="${appliance.id}" ${!db.canModify() ? 'disabled' : ''}><i class="fas fa-edit"></i> Edit Details</button>
+                        <button class="btn-secondary" id="detail-book-service-btn" data-id="${appliance.id}"><i class="fas fa-calendar-plus"></i> Book Brand Service</button>
                         <button class="btn-primary" id="detail-add-service-btn" data-id="${appliance.id}" ${!db.canModify() ? 'disabled' : ''}><i class="fas fa-wrench"></i> Log Service</button>
                     </div>
                 </div>
@@ -323,6 +325,8 @@ export const Views = {
                                     <span class="detail-info-value">${appliance.lifespanYears} years</span>
                                 </div>
                             </div>
+
+                            <a class="support-link" href="${supportUrlFor(appliance.brand)}" target="_blank" rel="noopener"><i class="fas fa-headset"></i> ${appliance.brand} support website <i class="fas fa-arrow-up-right-from-square"></i></a>
 
                             <!-- Warranty Panel -->
                             <div class="warranty-timeline">
@@ -642,7 +646,7 @@ export const Views = {
             <div class="page-view">
                 <div style="margin-bottom: 32px;">
                     <h2 style="font-family: var(--font-heading); font-size: 28px; font-weight: 800;">Analytics Report</h2>
-                    <p style="color: var(--text-secondary); font-size: 14px;">In-depth repair-vs-replace calculations, spending projections, and efficiency ratings.</p>
+                    <p style="color: var(--text-secondary); font-size: 14px;">A simple view of what needs attention, where your service money goes, and when to act.</p>
                 </div>
 
                 <!-- Replace or Keep Analysis Card -->
@@ -723,7 +727,7 @@ export const Views = {
                     <div style="display: flex; flex-direction: column; gap: 24px; height: 100%;">
                         <div class="chart-card" style="min-height: auto; padding: 20px;">
                             <div class="chart-card-header" style="margin-bottom: 12px;">
-                                <h3 class="chart-title">Spending by Room/Category</h3>
+                                <h3 class="chart-title">Service spend by room</h3>
                             </div>
                             <div class="chart-canvas-container" style="height: 240px;">
                                 <canvas id="categoryChart"></canvas>
@@ -731,7 +735,7 @@ export const Views = {
                         </div>
                         <div class="chart-card" style="min-height: auto; padding: 20px;">
                             <div class="chart-card-header" style="margin-bottom: 12px;">
-                                <h3 class="chart-title">Maintenance Spending History</h3>
+                                <h3 class="chart-title">Spending over time</h3>
                             </div>
                             <div class="chart-canvas-container" style="height: 240px;">
                                 <canvas id="timelineChart"></canvas>

@@ -1,21 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    /* Theme - Dark Mode Default (Glow/Neon Violet/Blue) */
-    --bg-gradient-start: #040212;
-    --bg-gradient-end: #070522;
-    --card-bg: rgba(10, 8, 38, 0.55);
-    --card-border: rgba(124, 58, 237, 0.18);
-    --card-hover-border: rgba(139, 92, 246, 0.55);
+    /* Skyline glass theme: teal for action, violet for insight, amber for moments that need care. */
+    --bg-gradient-start: #03111a;
+    --bg-gradient-end: #071523;
+    --card-bg: rgba(5, 20, 30, 0.62);
+    --card-border: rgba(115, 218, 224, 0.20);
+    --card-hover-border: rgba(115, 218, 224, 0.65);
     --text-primary: #ffffff;
-    --text-secondary: #a3a6cc;
-    --text-muted: #6b6e99;
+    --text-secondary: #b6d6de;
+    --text-muted: #7297a4;
     
-    --primary: #6366f1;
-    --primary-hover: #4f46e5;
-    --primary-glow: rgba(99, 102, 241, 0.35);
-    --secondary: #a855f7;
-    --secondary-hover: #9333ea;
+    --primary: #12bfc4;
+    --primary-hover: #0a9da8;
+    --primary-glow: rgba(18, 191, 196, 0.30);
+    --secondary: #8d76f6;
+    --secondary-hover: #765ee3;
     
     /* Status Colors */
     --success: #10b981;
@@ -66,7 +66,7 @@
 }
 
 body {
-    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+    background: linear-gradient(rgba(1, 13, 21, 0.68), rgba(1, 13, 21, 0.84)), url('../assets/skyline-background.jpg') center / cover no-repeat fixed;
     background-attachment: fixed;
     color: var(--text-primary);
     font-family: var(--font-body);
@@ -74,6 +74,20 @@ body {
     overflow-x: hidden;
     line-height: 1.5;
 }
+
+body::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: -1; background: radial-gradient(circle at 72% 16%, rgba(18, 191, 196, 0.14), transparent 32%), radial-gradient(circle at 20% 90%, rgba(141, 118, 246, 0.12), transparent 36%); }
+
+.welcome-splash { position: fixed; inset: 0; z-index: 5000; display: grid; place-items: center; background: linear-gradient(rgba(1, 13, 21, 0.45), rgba(1, 13, 21, 0.64)), url('../assets/skyline-background.jpg') center / cover no-repeat; transition: opacity .38s ease, visibility .38s ease; }
+.welcome-splash.is-leaving { opacity: 0; visibility: hidden; }
+.welcome-content { text-align: center; width: min(92vw, 540px); padding: 34px; border: 1px solid rgba(167, 243, 244, .26); border-radius: 28px; background: rgba(2, 16, 26, .54); box-shadow: 0 24px 80px rgba(0,0,0,.42); backdrop-filter: blur(14px); animation: welcome-rise .6s cubic-bezier(.2,.8,.2,1) both; }
+.welcome-mark { width: 62px; height: 62px; margin: 0 auto 16px; display: grid; place-items: center; color: white; font-size: 26px; border-radius: 20px; background: linear-gradient(135deg, var(--primary), var(--secondary)); box-shadow: 0 12px 30px rgba(18, 191, 196, .34); }
+.welcome-content h1 { font-family: var(--font-heading); font-size: clamp(30px, 6vw, 46px); letter-spacing: -1.5px; }
+.welcome-content p { margin: 8px auto 20px; color: #cae8ed; font-size: 14px; }
+.drop-loader { height: 28px; display: flex; align-items: end; justify-content: center; gap: 8px; }
+.drop-loader span { width: 10px; height: 10px; border-radius: 50% 50% 50% 3px; transform: rotate(-45deg); animation: color-drop .72s infinite ease-in-out; }
+.drop-loader span:nth-child(1) { background: #18d2d1; animation-delay: 0s; }.drop-loader span:nth-child(2) { background: #9c7cff; animation-delay: .12s; }.drop-loader span:nth-child(3) { background: #ffb86b; animation-delay: .24s; }
+@keyframes welcome-rise { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes color-drop { 0%,100% { transform: rotate(-45deg) translateY(0); opacity: .45; } 50% { transform: rotate(-45deg) translateY(-12px); opacity: 1; } }
 
 /* App Shell Layout */
 #app-layout {
@@ -1029,6 +1043,22 @@ header.top-header {
     margin-bottom: 8px;
     color: var(--text-secondary);
 }
+
+.smart-import-card {
+    border: 1px solid rgba(99, 102, 241, 0.42);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.13), rgba(168, 85, 247, 0.08));
+    border-radius: var(--border-radius-md);
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.smart-import-card > div:first-child { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.smart-import-card strong { color: var(--text-primary); font-size: 14px; }
+.smart-import-card p, .smart-import-status { margin: 0; color: var(--text-secondary); font-size: 12px; line-height: 1.45; }
+.smart-import-status { min-height: 18px; margin-top: 10px; color: var(--primary); }
+.scan-filled { border-color: var(--primary) !important; box-shadow: 0 0 0 3px var(--primary-glow); }
+.support-link { display: inline-flex; align-items: center; gap: 8px; color: var(--primary); font-weight: 700; font-size: 13px; text-decoration: none; margin: -2px 0 20px; }
+.support-link:hover { color: var(--secondary); text-decoration: underline; }
 
 .form-group input, .form-group select, .form-group textarea {
     width: 100%;

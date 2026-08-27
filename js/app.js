@@ -4,6 +4,7 @@
 import { db } from './db.js';
 import { AnalyticsEngine } from './recommendation.js';
 import { Views } from './views.js';
+import { applianceTypes, brands, extractApplianceDetails, readDocument, supportUrlFor } from './smart-import.js';
 
 // Global state
 const state = {
@@ -42,12 +43,15 @@ const serviceForm = document.getElementById('service-form');
  * Initialize application
  */
 async function init() {
+    const splashStarted = performance.now();
     await db.init();
     initTheme();
     initImageUpload();
+    initSmartImport();
     setupGlobalEventListeners();
     if (!db.isAuthenticated()) {
         showAuthScreen();
+        window.setTimeout(hideWelcomeSplash, Math.max(0, 1000 - (performance.now() - splashStarted)));
         return;
     }
     updateGlobalRoleHeader();
@@ -62,11 +66,20 @@ async function init() {
     } else if (initialView.startsWith('qr-portal?id=')) {
         const id = initialView.split('?id=')[1];
         navigateTo('qr-portal', id);
-    } else if (['home', 'appliances', 'reminders', 'analytics', 'profile'].includes(initialView)) {
+    } else if (['home', 'appliances', 'reminders', 'analytics', 'market', 'profile'].includes(initialView)) {
         navigateTo(initialView);
     } else {
         navigateTo('home');
     }
+    const remaining = Math.max(0, 1000 - (performance.now() - splashStarted));
+    window.setTimeout(hideWelcomeSplash, remaining);
+}
+
+function hideWelcomeSplash() {
+    const splash = document.getElementById('welcome-splash');
+    if (!splash) return;
+    splash.classList.add('is-leaving');
+    window.setTimeout(() => splash.remove(), 400);
 }
 
 function showAuthScreen() {
@@ -164,6 +177,74 @@ function initImageUpload() {
             }
         });
     }
+}
+
+/** Populate the guided selectors and scan manuals, warranty cards, invoices, and labels. */
+function initSmartImport() {
+    const typeSelect = document.getElementById('app-type');
+    const brandOptions = document.getElementById('brand-options');
+    const brandInput = document.getElementById('app-brand');
+    const fileInput = document.getElementById('app-document-file');
+    const uploadButton = document.getElementById('app-document-upload-btn');
+    const status = document.getElementById('app-document-status');
+    const supportLink = document.getElementById('app-support-link');
+    typeSelect.insertAdjacentHTML('beforeend', applianceTypes.map(type => `<option value="${type}">${type}</option>`).join(''));
+    brandOptions.innerHTML = brands.map(brand => `<option value="${brand}">`).join('');
+    const updateSupportLink = () => {
+        const brand = brandInput.value.trim();
+        supportLink.hidden = !brand;
+        if (brand) supportLink.href = supportUrlFor(brand);
+    };
+    brandInput.addEventListener('input', updateSupportLink);
+    typeSelect.addEventListener('change', () => {
+        const name = document.getElementById('app-name');
+        if (typeSelect.value && !name.value.trim()) name.value = typeSelect.value;
+    });
+    uploadButton.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const buttonLabel = uploadButton.innerHTML;
+        uploadButton.disabled = true;
+        uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning…';
+        status.textContent = 'Starting scan…';
+        try {
+            const text = await readDocument(file, message => { status.textContent = message; });
+            const details = extractApplianceDetails(text);
+            const fields = [
+                ['Brand', brandInput, details.brand],
+                ['Appliance type', typeSelect, details.applianceType],
+                ['Model number', document.getElementById('app-model'), details.model],
+                ['Serial number', document.getElementById('app-serial'), details.serialNumber],
+                ['Warranty', document.getElementById('app-warranty'), details.warrantyMonths],
+                ['Purchase date', document.getElementById('app-purchase-date'), details.purchaseDate]
+            ];
+            const added = [];
+            fields.forEach(([label, input, value]) => {
+                input.classList.remove('scan-filled');
+                if (value && !String(input.value).trim()) {
+                    input.value = value;
+                    input.classList.add('scan-filled');
+                    added.push(label);
+                }
+            });
+            const name = document.getElementById('app-name');
+            if (!name.value.trim() && details.applianceType) {
+                name.value = details.applianceType;
+                name.classList.add('scan-filled');
+                added.unshift('Appliance name');
+            }
+            updateSupportLink();
+            const found = ['brand', 'applianceType', 'model', 'serialNumber', 'warrantyMonths', 'purchaseDate'].filter(key => details[key]).length;
+            status.textContent = found ? (added.length ? `Scan complete — added ${added.join(', ')}. Please review the highlighted fields before saving.` : 'Scan complete — details were found, but your existing entries were kept unchanged.') : 'Scan complete, but no appliance details were recognised. Try a closer, well-lit photo of the brand and model label.';
+        } catch (error) {
+            status.textContent = `Could not scan this file: ${error.message}`;
+        } finally {
+            uploadButton.disabled = false;
+            uploadButton.innerHTML = buttonLabel;
+            fileInput.value = '';
+        }
+    });
 }
 
 /**
@@ -370,7 +451,7 @@ function renderAnalyticsCharts() {
 
     // Dynamic color configs matching active dark/light variables
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDark ? '#a3a6cc' : '#4e5170';
+    const textColor = isDark ? '#b6d6de' : '#315667';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
 
     // 1. Category/Room Spent Chart
@@ -383,30 +464,28 @@ function renderAnalyticsCharts() {
     }
 
     state.charts.category = new Chart(categoryCtx, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
             labels: roomLabels,
             datasets: [{
                 data: roomData,
-                backgroundColor: [
-                    '#6366f1', // Indigo
-                    '#a855f7', // Purple
-                    '#10b981', // Emerald
-                    '#f59e0b', // Amber
-                    '#f43f5e', // Rose
-                    '#06b6d4'  // Cyan
-                ],
-                borderWidth: 0
+                label: 'Service spend (₹)',
+                backgroundColor: '#1bc4c7',
+                borderRadius: 8,
+                borderWidth: 0,
+                maxBarThickness: 34
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: textColor, font: { family: 'Plus Jakarta Sans', weight: 600 } }
-                }
+                legend: { display: false },
+                tooltip: { callbacks: { label: context => ` ₹${Number(context.raw).toLocaleString('en-IN')}` } }
+            },
+            scales: {
+                y: { grid: { display: false }, ticks: { color: textColor, font: { family: 'Plus Jakarta Sans', weight: 600 } } },
+                x: { grid: { color: gridColor }, ticks: { color: textColor, callback: value => `₹${Number(value).toLocaleString('en-IN')}` } }
             }
         }
     });
@@ -416,16 +495,21 @@ function renderAnalyticsCharts() {
     const yearSpend = years.map(y => stats.spendByYear[y]);
 
     state.charts.timeline = new Chart(timelineCtx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: years.length > 0 ? years : ['2023', '2024', '2025', '2026'],
             datasets: [{
-                label: 'Maintenance Spend ($)',
+                label: 'Maintenance spend (₹)',
                 data: years.length > 0 ? yearSpend : [0, 0, 0, 0],
-                backgroundColor: 'rgba(99, 102, 241, 0.7)',
-                borderColor: '#6366f1',
-                borderWidth: 1,
-                borderRadius: 6
+                backgroundColor: 'rgba(125, 92, 255, 0.16)',
+                borderColor: '#9d7cff',
+                borderWidth: 3,
+                pointBackgroundColor: '#ffb86b',
+                pointBorderColor: '#ffffff',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.35
             }]
         },
         options: {
@@ -434,7 +518,7 @@ function renderAnalyticsCharts() {
             scales: {
                 y: {
                     grid: { color: gridColor },
-                    ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } }
+                    ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' }, callback: value => `₹${Number(value).toLocaleString('en-IN')}` }
                 },
                 x: {
                     grid: { display: false },
@@ -677,6 +761,37 @@ function setupDetailEvents() {
         addServiceBtn.addEventListener('click', () => {
             const id = addServiceBtn.getAttribute('data-id');
             openServiceModal(id);
+        });
+    }
+
+    // Open the manufacturer's official booking page and put the device details on the clipboard.
+    // Provider portals choose their own date/time UI, so those choices stay with the customer.
+    const bookServiceBtn = document.getElementById('detail-book-service-btn');
+    if (bookServiceBtn) {
+        bookServiceBtn.addEventListener('click', async () => {
+            const appliance = db.getApplianceById(bookServiceBtn.getAttribute('data-id'));
+            if (!appliance) return;
+            const user = db.getCurrentUser();
+            const summary = [
+                'AppliTrack service request',
+                `Customer: ${user?.name || ''}`,
+                `Email: ${user?.email || ''}`,
+                `Appliance: ${appliance.name}`,
+                `Brand: ${appliance.brand}`,
+                `Model: ${appliance.model}`,
+                `Serial number: ${appliance.serialNumber || 'Not available'}`,
+                `Purchase date: ${appliance.purchaseDate}`,
+                `Warranty: ${appliance.warrantyMonths} months`,
+                `Location: ${appliance.room}`,
+                appliance.notes ? `Notes: ${appliance.notes}` : ''
+            ].filter(Boolean).join('\n');
+            window.open(supportUrlFor(appliance.brand), '_blank', 'noopener');
+            try {
+                await navigator.clipboard.writeText(summary);
+                alert('The official support website has opened. Your appliance details were copied—paste them into the booking form, then choose your preferred date and time.');
+            } catch (error) {
+                alert('The official support website has opened. Enter the appliance details there, then choose your preferred date and time.');
+            }
         });
     }
 
@@ -993,6 +1108,9 @@ function openApplianceModal(appliance = null) {
     document.getElementById('app-image-base64').value = '';
     document.getElementById('app-image-preview-container').style.display = 'none';
     document.getElementById('app-image-preview').src = '';
+    document.getElementById('app-type').value = '';
+    document.getElementById('app-document-status').textContent = '';
+    document.getElementById('app-support-link').hidden = true;
 
     if (appliance) {
         title.textContent = 'Modify Appliance Specs';
@@ -1002,6 +1120,7 @@ function openApplianceModal(appliance = null) {
         document.getElementById('app-id').value = appliance.id;
         document.getElementById('app-name').value = appliance.name;
         document.getElementById('app-brand').value = appliance.brand;
+        document.getElementById('app-type').value = appliance.type || '';
         document.getElementById('app-model').value = appliance.model;
         document.getElementById('app-serial').value = appliance.serialNumber || '';
         document.getElementById('app-purchase-date').value = appliance.purchaseDate;
@@ -1011,6 +1130,9 @@ function openApplianceModal(appliance = null) {
         document.getElementById('app-room').value = appliance.room;
         document.getElementById('app-status').value = appliance.status;
         document.getElementById('app-notes').value = appliance.notes || '';
+        const supportLink = document.getElementById('app-support-link');
+        supportLink.href = supportUrlFor(appliance.brand);
+        supportLink.hidden = !appliance.brand;
 
         // Load photo preview if existing imageUrl is present
         if (appliance.imageUrl) {
