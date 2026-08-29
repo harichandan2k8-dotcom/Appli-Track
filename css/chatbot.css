@@ -1,0 +1,91 @@
+/* Isolated AppliTrack appliance assistant widget. */
+.appliance-chatbot {
+    --chat-bg: #061822;
+    --chat-surface: rgba(8, 28, 40, 0.98);
+    --chat-border: rgba(115, 218, 224, 0.28);
+    --chat-text: #f4fbfc;
+    --chat-muted: #a5c4cc;
+    --chat-teal: #12bfc4;
+    --chat-purple: #8d76f6;
+    --chat-user: rgba(18, 191, 196, 0.16);
+    --chat-assistant: rgba(255, 255, 255, 0.06);
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 4900;
+    font-family: var(--font-body, "Plus Jakarta Sans", Arial, sans-serif);
+}
+
+.appliance-chatbot *, .appliance-chatbot *::before, .appliance-chatbot *::after { box-sizing: border-box; }
+
+.appliance-chatbot__launcher {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: linear-gradient(135deg, var(--chat-teal), var(--chat-purple));
+    box-shadow: 0 12px 30px rgba(18, 191, 196, 0.35);
+    cursor: pointer;
+    font-size: 23px;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.appliance-chatbot__launcher:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 16px 34px rgba(18, 191, 196, 0.46); }
+.appliance-chatbot__launcher:focus-visible, .appliance-chatbot__send:focus-visible, .appliance-chatbot__icon-button:focus-visible, .appliance-chatbot__input:focus-visible, .appliance-chatbot__select:focus-visible { outline: 3px solid rgba(141, 118, 246, 0.7); outline-offset: 3px; }
+
+.appliance-chatbot__panel {
+    width: min(400px, calc(100vw - 32px));
+    height: min(500px, calc(100vh - 108px));
+    position: absolute;
+    right: 0;
+    bottom: 70px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--chat-text);
+    background: var(--chat-surface);
+    border: 1px solid var(--chat-border);
+    border-radius: 20px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48);
+    backdrop-filter: blur(18px);
+}
+
+.appliance-chatbot__panel[hidden] { display: none; }
+.appliance-chatbot__header { display: flex; align-items: center; gap: 10px; padding: 15px 16px; border-bottom: 1px solid var(--chat-border); background: linear-gradient(100deg, rgba(18, 191, 196, 0.17), rgba(141, 118, 246, 0.19)); }
+.appliance-chatbot__avatar { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; color: #fff; background: linear-gradient(135deg, var(--chat-teal), var(--chat-purple)); }
+.appliance-chatbot__title { min-width: 0; flex: 1; }
+.appliance-chatbot__title strong { display: block; font-size: 14px; line-height: 1.25; }
+.appliance-chatbot__title span { display: block; margin-top: 2px; color: #c7eff0; font-size: 11px; }
+.appliance-chatbot__icon-button { width: 31px; height: 31px; display: grid; place-items: center; border: 0; border-radius: 9px; color: var(--chat-text); background: transparent; cursor: pointer; font-size: 16px; }
+.appliance-chatbot__icon-button:hover { background: rgba(255, 255, 255, 0.12); }
+
+.appliance-chatbot__messages { min-height: 0; flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding: 16px; scroll-behavior: smooth; }
+.appliance-chatbot__message { max-width: 86%; padding: 10px 12px; border-radius: 14px; font-size: 13px; line-height: 1.48; white-space: pre-wrap; overflow-wrap: anywhere; }
+.appliance-chatbot__message--assistant { align-self: flex-start; border: 1px solid rgba(115, 218, 224, 0.14); background: var(--chat-assistant); border-bottom-left-radius: 4px; }
+.appliance-chatbot__message--user { align-self: flex-end; background: var(--chat-user); border: 1px solid rgba(18, 191, 196, 0.22); border-bottom-right-radius: 4px; }
+.appliance-chatbot__typing { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; min-height: 35px; padding: 10px 12px; border-radius: 14px; border-bottom-left-radius: 4px; background: var(--chat-assistant); }
+.appliance-chatbot__typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--chat-teal); animation: appliance-chatbot-pulse 1.1s infinite ease-in-out; }
+.appliance-chatbot__typing span:nth-child(2) { animation-delay: 120ms; }.appliance-chatbot__typing span:nth-child(3) { animation-delay: 240ms; }
+
+.appliance-chatbot__form { display: block; padding: 10px 12px 12px; border-top: 1px solid var(--chat-border); background: rgba(0, 8, 14, 0.28); }
+.appliance-chatbot__fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.appliance-chatbot__field { min-width: 0; display: block; }
+.appliance-chatbot__field span { display: block; margin: 0 0 4px 2px; color: var(--chat-muted); font-size: 10px; font-weight: 800; letter-spacing: .55px; text-transform: uppercase; }
+.appliance-chatbot__select { width: 100%; min-width: 0; height: 35px; padding: 0 8px; border: 1px solid rgba(115, 218, 224, 0.22); border-radius: 9px; color: var(--chat-text); background: rgba(255, 255, 255, 0.05); font: inherit; font-size: 11px; }
+.appliance-chatbot__select option { color: #10242f; background: #f4fbfc; }
+.appliance-chatbot__select:disabled { opacity: .55; cursor: not-allowed; }
+.appliance-chatbot__composer { display: flex; gap: 9px; align-items: flex-end; }
+.appliance-chatbot__input { min-width: 0; flex: 1; min-height: 42px; max-height: 100px; resize: none; padding: 11px 12px; border: 1px solid rgba(115, 218, 224, 0.22); border-radius: 12px; color: var(--chat-text); background: rgba(255, 255, 255, 0.05); font: inherit; font-size: 13px; line-height: 1.35; }
+.appliance-chatbot__input::placeholder { color: var(--chat-muted); }.appliance-chatbot__input:disabled { opacity: 0.6; cursor: not-allowed; }
+.appliance-chatbot__send { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; border: 0; border-radius: 12px; color: #fff; background: linear-gradient(135deg, var(--chat-teal), var(--chat-purple)); cursor: pointer; font-size: 15px; }
+.appliance-chatbot__send:disabled { opacity: 0.55; cursor: not-allowed; }
+
+@keyframes appliance-chatbot-pulse { 0%, 80%, 100% { transform: translateY(0); opacity: 0.45; } 40% { transform: translateY(-3px); opacity: 1; } }
+
+@media (max-width: 520px) {
+    .appliance-chatbot { right: 16px; bottom: 16px; }
+    .appliance-chatbot__panel { bottom: 68px; }
+}

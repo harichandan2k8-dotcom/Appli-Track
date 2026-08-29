@@ -11,3 +11,22 @@ AppliTrack is a static, authenticated appliance-care web application. It uses Su
 5. Test sign-up, confirmation email, sign-in, data creation, sign-out, and that a second account cannot see the first account's data.
 
 The app intentionally starts with no sample accounts, appliances, or service records.
+
+## Appliance Care Chatbot setup
+
+The floating Appliance Care Assistant is powered by the separate Supabase Edge Function `appliance-chat`. It keeps chat history in the browser only and reads appliance context only from the signed-in user's existing appliance data.
+
+1. Install and authenticate the [Supabase CLI](https://supabase.com/docs/guides/cli), then link this folder to the appropriate Supabase project.
+2. Set the Gemini key as a Supabase secret. Do not add this key to `js/config.js` or any project file:
+
+   ```powershell
+   supabase secrets set GEMINI_API_KEY=your_key_here
+   ```
+
+3. Deploy the function:
+
+   ```powershell
+   supabase functions deploy appliance-chat
+   ```
+
+4. Open the app, sign in, and use the assistant button at the bottom-right. The function uses Gemini `gemini-2.0-flash` and does not create or change any database tables.
