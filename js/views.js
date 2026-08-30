@@ -5,6 +5,36 @@ import { AnalyticsEngine } from './recommendation.js';
 import { db, dbConfig } from './db.js';
 import { supportUrlFor } from './smart-import.js';
 
+function maintenanceTipsFor(appliance) {
+    const label = `${appliance.name || ''} ${appliance.type || ''}`.toLowerCase();
+    const guides = [
+        { match: /air conditioner|\bac\b|aircon/, icon: 'fa-snowflake', title: 'Air conditioner care', tips: ['Clean the removable air filter every 2–4 weeks during regular use.', 'Keep curtains, furniture, and outdoor-unit airflow paths clear.', 'Schedule professional cleaning before peak summer use.'] },
+        { match: /air purifier/, icon: 'fa-wind', title: 'Air purifier care', tips: ['Check the filter-life indicator and replace filters on the brand schedule.', 'Keep the air intake and outlet clear of walls and curtains.', 'Vacuum exterior grilles gently with the appliance switched off.'] },
+        { match: /washing machine|washer/, icon: 'fa-shirt', title: 'Washing machine care', tips: ['Run a drum-clean cycle monthly or as the manufacturer recommends.', 'Leave the door and detergent drawer open after washes to reduce odour.', 'Clean the user-accessible drain filter and check hoses periodically.'] },
+        { match: /deep freezer/, icon: 'fa-icicles', title: 'Deep freezer care', tips: ['Keep the lid seal clean and check that it closes fully.', 'Defrost according to the manual before ice buildup becomes heavy.', 'Leave clearance around the outside for ventilation and keep it level.'] },
+        { match: /refrigerator|fridge|freezer/, icon: 'fa-temperature-low', title: 'Refrigerator care', tips: ['Keep internal air vents clear so cold air can circulate.', 'Wipe the door gasket regularly and make sure the door seals fully.', 'Clean spills quickly and keep the rear ventilation space free of dust.'] },
+        { match: /television|\btv\b/, icon: 'fa-tv', title: 'Television care', tips: ['Use a dry microfiber cloth for the screen—avoid sprays directly on it.', 'Keep ventilation openings clear to prevent overheating.', 'Use a surge protector where possible and update software when prompted.'] },
+        { match: /water purifier/, icon: 'fa-droplet', title: 'Water purifier care', tips: ['Replace filters when the service indicator or brand schedule recommends it.', 'Keep the dispenser area clean and wipe it with a clean cloth.', 'Book periodic sanitisation through the brand service provider.'] },
+        { match: /water pump/, icon: 'fa-faucet-drip', title: 'Water pump care', tips: ['Keep the pump area dry, ventilated, and free of dust or stored items.', 'Check visible external pipes for leaks or vibration without touching electrical parts.', 'Arrange periodic service if pressure drops or the pump cycles unusually often.'] },
+        { match: /microwave/, icon: 'fa-fire-burner', title: 'Microwave care', tips: ['Clean food splashes after the appliance cools to prevent odours.', 'Use only microwave-safe containers and never run it empty.', 'Keep the door seal area clean and do not force the door shut.'] },
+        { match: /oven/, icon: 'fa-temperature-high', title: 'Oven care', tips: ['Clean spills after the oven cools to prevent smoke and baked-on residue.', 'Use the racks and trays recommended for the model.', 'Keep oven vents clear and have heating or door-seal issues serviced.'] },
+        { match: /dishwasher/, icon: 'fa-soap', title: 'Dishwasher care', tips: ['Clean the accessible filter regularly as described in the manual.', 'Run a hot maintenance cycle with a dishwasher cleaner when needed.', 'Check spray-arm holes and avoid blocking them with large dishes.'] },
+        { match: /dryer/, icon: 'fa-shirt', title: 'Dryer care', tips: ['Clean the lint filter after every load once the appliance has cooled.', 'Do not overload the drum so air can circulate properly.', 'Keep the surrounding area clear and arrange service if drying takes much longer than usual.'] },
+        { match: /exhaust fan/, icon: 'fa-fan', title: 'Exhaust fan care', tips: ['Switch off power before cleaning dust and grease from the cover.', 'Keep the grille and exterior vent free of visible blockage.', 'Arrange service if the fan becomes noisy, loose, or stops extracting air.'] },
+        { match: /water heater|geyser/, icon: 'fa-hot-tub-person', title: 'Water heater care', tips: ['Use a moderate temperature setting to reduce energy use and scald risk.', 'Arrange periodic professional servicing or descaling based on water hardness.', 'Never tamper with the pressure-relief valve or electrical cover.'] },
+        { match: /induction cooktop/, icon: 'fa-bolt', title: 'Induction cooktop care', tips: ['Use flat, induction-compatible cookware of the correct size.', 'Wipe the glass surface only after it cools.', 'Keep vents clear and do not use the appliance if the glass is cracked.'] },
+        { match: /cooktop/, icon: 'fa-fire-burner', title: 'Cooktop care', tips: ['Clean spills after the surface cools to protect burners and controls.', 'Use cookware that sits steadily on the supports.', 'For gas smells, flames behaving unusually, or ignition problems, stop use and contact a certified technician.'] },
+        { match: /mixer grinder/, icon: 'fa-blender', title: 'Mixer grinder care', tips: ['Unplug before cleaning the jar, blades, or base.', 'Do not overload the jar or run it continuously beyond the manual’s limit.', 'Keep the coupler and jar base dry before use.'] },
+        { match: /coffee maker/, icon: 'fa-mug-hot', title: 'Coffee maker care', tips: ['Rinse removable parts after use and clean the drip tray regularly.', 'Descale on the manufacturer’s schedule, especially in hard-water areas.', 'Use fresh water and do not leave brewed coffee sitting for long periods.'] },
+        { match: /robot vacuum/, icon: 'fa-robot', title: 'Robot vacuum care', tips: ['Empty the dust bin and clean brushes after regular use.', 'Keep charging contacts clean and place the dock against a clear wall.', 'Remove loose cables and small objects from floors before a cleaning run.'] },
+        { match: /vacuum cleaner/, icon: 'fa-vacuum', title: 'Vacuum cleaner care', tips: ['Empty the dust container or replace the bag before it becomes full.', 'Clean or replace filters according to the manual.', 'Check the hose and floor head for visible blockages with the appliance unplugged.'] },
+        { match: /room heater/, icon: 'fa-fire', title: 'Room heater care', tips: ['Keep at least one metre of clear space around the heater.', 'Plug it directly into a suitable wall socket, not an overloaded extension.', 'Stop using it if you notice damage, sparking, smoke, or a burning smell.'] },
+        { match: /toaster/, icon: 'fa-bread-slice', title: 'Toaster care', tips: ['Unplug and let it cool before emptying the crumb tray.', 'Never insert metal objects into the slots.', 'Keep it away from curtains, paper, and other flammable items while in use.'] },
+        { match: /ceiling fan|\bfan\b/, icon: 'fa-fan', title: 'Ceiling fan care', tips: ['Switch off power before cleaning dust from the blades.', 'Check for visible wobble or unusual noise and arrange service if it persists.', 'Keep the regulator or remote batteries in good condition.'] }
+    ];
+    return guides.find(guide => guide.match.test(label)) || { icon: 'fa-screwdriver-wrench', title: 'Appliance care', tips: ['Follow the cleaning and maintenance schedule in the appliance manual.', 'Keep vents, user-accessible filters, and exterior surfaces clean.', 'Record unusual sounds, leaks, or error codes before booking service.'] };
+}
+
 export const Views = {
     /**
      * Helper to format currency
@@ -252,6 +282,7 @@ export const Views = {
         const health = AnalyticsEngine.calculateHealthScore(appliance, allServices);
         const recommendation = AnalyticsEngine.getRecommendation(appliance, allServices);
         const age = AnalyticsEngine.getAge(appliance.purchaseDate);
+        const maintenance = maintenanceTipsFor(appliance);
 
         // Calculate warranty details
         const isUnderWarranty = AnalyticsEngine.isUnderWarranty(appliance.purchaseDate, appliance.warrantyMonths);
@@ -352,6 +383,20 @@ export const Views = {
                                 <p style="font-size: 13px; color: var(--text-secondary);">${appliance.notes || 'No user notes added for this device.'}</p>
                             </div>
                         </div>
+
+                        <section class="maintenance-tips-card" aria-label="Maintenance tips for ${appliance.name}">
+                            <div class="maintenance-tips-card__header">
+                                <span class="maintenance-tips-card__icon"><i class="fas ${maintenance.icon}"></i></span>
+                                <div>
+                                    <h3>Maintenance tips for ${appliance.brand} ${appliance.model}</h3>
+                                    <p>${maintenance.title} for your specific device.</p>
+                                </div>
+                            </div>
+                            <ul>
+                                ${maintenance.tips.map(tip => `<li>${tip}</li>`).join('')}
+                            </ul>
+                            <p class="maintenance-tips-card__note"><i class="fas fa-circle-info"></i> Always follow the manual for this model and use certified service for internal, electrical, gas, or refrigerant work.</p>
+                        </section>
 
                         <!-- Service Logs Card -->
                         <div class="detail-main-card">
