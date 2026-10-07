@@ -1115,21 +1115,34 @@ export const Views = {
                     </div>
 
                     <div class="qr-portal-contacts">
-                        <h4 style="font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 12px;"><i class="fas fa-phone-alt"></i> Service Support Contacts</h4>
-                        <div class="contact-row">
-                            <span>Primary Tech Care</span>
-                            <a href="tel:+15551234567" style="color: var(--primary); text-decoration: none; font-weight: 600;">+1 (555) 123-4567</a>
-                        </div>
-                        <div class="contact-row">
-                            <span>Emergency Brand Helpline</span>
-                            <a href="tel:+18005559999" style="color: var(--primary); text-decoration: none; font-weight: 600;">1 (800) 555-9999</a>
-                        </div>
-                        <div class="contact-row" style="border: none;">
-                            <span>Active Technician Assigned</span>
-                            <span style="font-weight: 600;">David (CoolCare Repairs)</span>
-                        </div>
-                    </div>
-                </div>
+    <h4 style="font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 12px;">
+        <i class="fas fa-phone-alt"></i> Service Support
+    </h4>
+
+    ${services.length === 0 ? `
+        <p style="font-size: 13px; color: var(--text-secondary);">
+            No service contact details available.
+        </p>
+    ` : `
+        <div class="contact-row">
+            <span>Technician</span>
+            <span style="font-weight: 600;">
+                ${services[0].technician || 'Not provided'}
+            </span>
+        </div>
+
+        <div class="contact-row" style="border: none;">
+            <span>Contact Number</span>
+            ${services[0].phone ? `
+                <a href="tel:${services[0].phone}" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                    ${services[0].phone}
+                </a>
+            ` : `
+                <span style="font-weight: 600;">Not provided</span>
+            `}
+        </div>
+    `}
+</div>
 
                 <div class="detail-main-card">
                     <h3 class="detail-section-title" style="font-size: 16px; margin-bottom: 16px;"><i class="fas fa-history"></i> Recent Service Log</h3>
